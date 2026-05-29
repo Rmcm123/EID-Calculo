@@ -61,7 +61,7 @@ class creador_ecuacion:
         if n <= 0:
             return 0
         x = n
-        for _ in range(100):
+        for i in range(100):
             x = (x + n / x) / 2
         return x
 
