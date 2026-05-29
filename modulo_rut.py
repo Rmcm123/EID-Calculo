@@ -34,8 +34,13 @@ class DigitoVerificador:
     
 class AnalizadorRut:
     def __init__(self, rut_completo: str):
-        self.rut_completo = rut_completo
-        self.rut_limpio = self._limpiar_rut(rut_completo)
+        self.rut_completo = rut_completo.strip()
+        if "-" in self.rut_completo:
+            partes = self.rut_completo.split("-")
+            if len(partes) != 2 or len(partes[1].strip()) != 1:
+                raise ValueError("Debe haber un dígito o 'K' después del guion.")
+                
+        self.rut_limpio = self._limpiar_rut(self.rut_completo).replace(" ", "")
         self.cuerpo, self.dv_ingresado = self._split_rut()
         self.validar_cuerpo()
     
