@@ -4,6 +4,7 @@ from tkinter import messagebox
 from modulo_conicas import creador_ecuacion
 from modulo_funciones_tramos import AnalizadorFuncionTramos
 from modulo_rut import AnalizadorRut, DigitoVerificador
+from grafico import GraficoConicas, GraficoTramos
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
@@ -41,23 +42,57 @@ class AplicacionCalculo(ctk.CTk):
 
     def _setup_tab_conicas(self):
         self.tab_conicas.columnconfigure(0, weight=1)
+        self.tab_conicas.columnconfigure(1, weight=1)
         self.tab_conicas.rowconfigure(0, weight=1)
         
-        # Panel Izquierdo: Pasos
-        self.txt_pasos_conicas = ctk.CTkTextbox(self.tab_conicas, wrap="word", font=("Arial", 14))
+        # pasos
+        self.txt_pasos_conicas = ctk.CTkTextbox(self.tab_conicas, wrap="word", font=("Arial", 12))
         self.txt_pasos_conicas.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self._configurar_estilos(self.txt_pasos_conicas)
+
+        # grafica
+        self.grafico_conicas = GraficoConicas(self.tab_conicas)
+        self.grafico_conicas.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
     def _setup_tab_tramos(self):
         self.tab_tramos.columnconfigure(0, weight=1)
+        self.tab_tramos.columnconfigure(1, weight=1)
         self.tab_tramos.rowconfigure(0, weight=1)
         
-        # Panel Izquierdo: Pasos y tabla
-        self.txt_pasos_tramos = ctk.CTkTextbox(self.tab_tramos, wrap="word", font=("Arial", 14))
+        # pasos y tabla
+        self.txt_pasos_tramos = ctk.CTkTextbox(self.tab_tramos, wrap="word", font=("Arial", 12))
         self.txt_pasos_tramos.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self._configurar_estilos(self.txt_pasos_tramos)
+
+        # grafica
+        self.grafico_tramos = GraficoTramos(self.tab_tramos)
+        self.grafico_tramos.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+    def _configurar_estilos(self, textbox):
+        tw = textbox._textbox
+        tw.tag_configure("titulo", font=("Arial", 15, "bold"), foreground="#4FC3F7",
+                         spacing1=10, spacing3=4)
+        tw.tag_configure("subtitulo", font=("Arial", 13, "bold"), foreground="#81C784",
+                         spacing1=6, spacing3=3)
+        tw.tag_configure("separador", font=("Arial", 6), foreground="#555555")
+        tw.tag_configure("normal", font=("Arial", 12), foreground="#D0D0D0",
+                         spacing1=1, lmargin1=10, lmargin2=10)
+        tw.tag_configure("math", font=("Consolas", 11), foreground="#FFD54F",
+                         spacing1=1, lmargin1=10, lmargin2=10)
+        tw.tag_configure("resultado", font=("Arial", 12, "bold"), foreground="#FF8A65",
+                         spacing1=3, spacing3=2, lmargin1=10)
+        tw.tag_configure("tabla_header", font=("Consolas", 11, "bold"), foreground="#90CAF9",
+                         spacing1=2, lmargin1=10, lmargin2=10)
+        tw.tag_configure("tabla_fila", font=("Consolas", 11), foreground="#B0BEC5",
+                         lmargin1=10, lmargin2=10)
+        tw.tag_configure("info", font=("Arial", 11), foreground="#80CBC4",
+                         spacing1=1, lmargin1=10, lmargin2=10)
 
     def limpiar_campos(self):
         self.txt_pasos_conicas.delete(1.0, "end")
         self.txt_pasos_tramos.delete(1.0, "end")
+        self.grafico_conicas.limpiar()
+        self.grafico_tramos.limpiar()
 
     def analizar_rut(self):
         rut_input = self.ent_rut.get()
@@ -65,55 +100,81 @@ class AplicacionCalculo(ctk.CTk):
         self.limpiar_campos()
         
         try:
-            # === CÓNICAS ===
+            # === CONICAS ===
             conica = creador_ecuacion(rut_input)
             
             if not conica.es_valido:
                 self.lbl_estado.configure(text="RUT Inválido: DV incorrecto", text_color="red")
                 return
             
-            self.lbl_estado.configure(text="RUT Válido ✅", text_color="green")
+            self.lbl_estado.configure(text="RUT Válido", text_color="green")
             
-            # Formatear texto cónicas para mostrar procedimiento
-            texto_conica = "=== VALIDACIÓN RUT ===\n"
+            # Formatear texto conicas con estilos visuales
+            txt = self.txt_pasos_conicas
+            
+            txt.insert("end", " VALIDACION DEL RUT\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            
             calculo = DigitoVerificador.calcular(conica.rut.cuerpo)
+            txt.insert("end", " Desglose de multiplicaciones:\n", "subtitulo")
             for d, m, p in calculo["desglose"]:
-                texto_conica += f"{d} x {m} = {p}\n"
-            texto_conica += f"Suma total = {calculo['suma_total']}\n"
-            texto_conica += f"Resto = {calculo['resto']}\n"
-            texto_conica += f"DV Esperado = {calculo['dv_esperado']}\n\n"
+                txt.insert("end", f"   {d}  x  {m}  =  {p}\n", "tabla_fila")
             
-            texto_conica += "=== PASOS COEFICIENTES ===\n"
+            txt.insert("end", "\n", "normal")
+            txt.insert("end", f" Suma total = {calculo['suma_total']}\n", "resultado")
+            txt.insert("end", f" Resto = {calculo['resto']}\n", "resultado")
+            txt.insert("end", f" DV Esperado = {calculo['dv_esperado']}\n\n", "resultado")
+            
+            txt.insert("end", " COEFICIENTES DE LA ECUACION\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            
             for paso in conica.pasos_coeficientes:
-                texto_conica += paso + "\n"
-                
-            texto_conica += "\n=== CONSTRUCCIÓN CANÓNICA ===\n"
+                txt.insert("end", f" {paso}\n", "math")
+            
+            txt.insert("end", "\n", "normal")
+            txt.insert("end", " CONSTRUCCION CANONICA\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            
             elementos = conica.calcular_elementos()
             for paso in elementos["pasos_canonicos"]:
-                texto_conica += paso + "\n"
-                
-            texto_conica += "\n=== PROCEDIMIENTO INVERSO ===\n"
+                txt.insert("end", f" {paso}\n", "math")
+            
+            txt.insert("end", "\n", "normal")
+            txt.insert("end", " PROCEDIMIENTO INVERSO\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            
             for paso in conica.procedimiento_inverso(elementos):
-                texto_conica += paso + "\n"
-
-            self.txt_pasos_conicas.insert(1.0, texto_conica)
+                txt.insert("end", f" {paso}\n", "math")
+            
+            # Dibujar grafica de la conica
+            self.grafico_conicas.dibujar(conica, elementos)
             
             # === FUNCIONES POR TRAMOS ===
             analizador_tramos = AnalizadorFuncionTramos(conica.digitos)
             res_tramos = analizador_tramos.analizar()
             
-            texto_tramos = f"Caso Seleccionado: {res_tramos['nombre_caso']}\n"
-            texto_tramos += f"Regla (d8 % 3 = {res_tramos['residuo_d8_mod_3']})\n\n"
-            texto_tramos += f"Función generada en torno a x = {res_tramos['a']}:\n"
-            texto_tramos += f"{res_tramos['funcion']}\n\n"
+            txt = self.txt_pasos_tramos
             
-            texto_tramos += "=== TABLA DE VALORES (EVIDENCIA COMPUTACIONAL) ===\n"
-            texto_tramos += "x\t\tLado\t\tf(x)\n"
-            texto_tramos += "-"*40 + "\n"
+            txt.insert("end", " FUNCION POR TRAMOS\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            
+            txt.insert("end", f" Caso: {res_tramos['nombre_caso']}\n", "resultado")
+            txt.insert("end", f" Regla: d8 mod 3 = {res_tramos['residuo_d8_mod_3']}\n\n", "info")
+            
+            txt.insert("end", " Funcion generada:\n", "subtitulo")
+            txt.insert("end", f" Punto critico:  x = {res_tramos['a']}\n", "normal")
+            txt.insert("end", f" {res_tramos['funcion']}\n\n", "math")
+            
+            txt.insert("end", " EVIDENCIA COMPUTACIONAL\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            
+            txt.insert("end", f" {'x':>10}  {'Lado':>10}  {'f(x)':>12}\n", "tabla_header")
+            txt.insert("end", " " + "\u2500" * 36 + "\n", "separador")
             for fila in res_tramos['tabla_valores']:
-                texto_tramos += f"{fila['x']}\t{fila['lado']}\t{fila['f(x)']}\n"
-                
-            self.txt_pasos_tramos.insert(1.0, texto_tramos)
+                txt.insert("end", f" {str(fila['x']):>10}  {fila['lado']:>10}  {str(fila['f(x)']):>12}\n", "tabla_fila")
+            
+            # Dibujar grafica de la funcion por tramos
+            self.grafico_tramos.dibujar(analizador_tramos, res_tramos)
 
         except Exception as e:
             self.lbl_estado.configure(text=f"Error al procesar: {str(e)}", text_color="red")
@@ -121,4 +182,3 @@ class AplicacionCalculo(ctk.CTk):
 if __name__ == "__main__":
     app = AplicacionCalculo()
     app.mainloop()
-
