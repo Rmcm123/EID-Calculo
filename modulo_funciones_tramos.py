@@ -1,12 +1,12 @@
+DESPLAZAMIENTOS = [-1, -0.1, -0.01, -0.001, 0.001, 0.01, 0.1, 1]
+TOLERANCIA = 0.0000001
+
+
 class AnalizadorFuncionTramos:
     def __init__(self, digitos):
         self.digitos = self.validar_digitos(digitos)
 
-        self.d1 = self.digitos[0]
-        self.d2 = self.digitos[1]
-        self.d3 = self.digitos[2]
-        self.d4 = self.digitos[3]
-        self.d5 = self.digitos[4]
+        self.d1, self.d2, self.d3, self.d4, self.d5 = self.digitos[:5]
         self.d8 = self.digitos[7]
 
         self.a = self.d3
@@ -41,30 +41,45 @@ class AnalizadorFuncionTramos:
         else:
             resultado = self.analizar_infinita()
 
-        resultado["digitos"] = self.digitos
-        resultado["a"] = self.a
-        resultado["d8"] = self.d8
-        resultado["residuo_d8_mod_3"] = self.residuo
-        resultado["regla_seleccion"] = self.texto_regla_seleccion()
-        resultado["tabla_valores"] = self.generar_tabla_valores()
-        resultado["puntos_criticos"] = self.obtener_puntos_criticos()
+        resultado.update({
+            "digitos": self.digitos,
+            "a": self.a,
+            "d8": self.d8,
+            "residuo_d8_mod_3": self.residuo,
+            "regla_seleccion": self.texto_regla_seleccion(),
+            "tabla_valores": self.generar_tabla_valores(),
+            "puntos_criticos": self.obtener_puntos_criticos()
+        })
 
         return resultado
 
+    def pasos_inicio(self, funcion):
+        return [
+            self.texto_regla_seleccion(),
+            f"El punto de analisis es a = d3 = {self.a}.",
+            f"La funcion generada es {funcion}."
+        ]
+
     def analizar_removible(self):
         limite = self.a + self.d1
+        funcion_original = f"f(x) = ((x - {self.a})(x + {self.d1})) / (x - {self.a}), con x != {self.a}"
+        funcion_simplificada = f"f(x) = x + {self.d1}, con x != {self.a}"
+
+        procedimiento = self.pasos_inicio(funcion_original) + [
+            f"Para x distinto de {self.a}, se cancela el factor comun (x - {self.a}).",
+            f"La expresion simplificada queda {funcion_simplificada}.",
+            f"Limite por izquierda = a + d1 = {self.a} + {self.d1} = {limite}.",
+            f"Limite por derecha = a + d1 = {self.a} + {self.d1} = {limite}.",
+            f"Como ambos limites laterales son iguales, el limite existe y vale {limite}.",
+            f"La funcion original no esta definida en x = {self.a}, por eso no es continua en el punto.",
+            "La discontinuidad es removible porque el limite existe, pero f(a) no existe."
+        ]
 
         return {
             "caso": "removible",
             "nombre_caso": "Discontinuidad removible",
-            "funcion": "f(x) = ((x - {a})(x + {d1})) / (x - {a}), con x != {a}".format(
-                a=self.a,
-                d1=self.d1
-            ),
-            "funcion_simplificada": "f(x) = x + {d1}, con x != {a}".format(
-                d1=self.d1,
-                a=self.a
-            ),
+            "funcion": funcion_original,
+            "funcion_simplificada": funcion_simplificada,
             "limite_izquierda": limite,
             "limite_derecha": limite,
             "limite_existe": True,
@@ -76,15 +91,17 @@ class AnalizadorFuncionTramos:
             "justificacion": (
                 "El factor (x - a) aparece arriba y abajo. "
                 "Si x es distinto de a, se puede simplificar y queda x + d1. "
-                "Por eso el limite por ambos lados vale {limite}, "
-                "pero la funcion original no esta definida en x = {a}."
-            ).format(limite=limite, a=self.a)
+                f"Por eso el limite por ambos lados vale {limite}, "
+                f"pero la funcion original no esta definida en x = {self.a}."
+            ),
+            "procedimiento": procedimiento
         }
 
     def analizar_salto(self):
         limite_izquierda = self.a + self.d2
         limite_derecha = self.a + self.d4
         valor_en_a = limite_derecha
+        funcion = f"f(x) = x + {self.d2}, si x < {self.a}; f(x) = x + {self.d4}, si x >= {self.a}"
 
         limite_existe = limite_izquierda == limite_derecha
         es_continua = limite_existe and valor_en_a == limite_izquierda
@@ -94,24 +111,36 @@ class AnalizadorFuncionTramos:
             justificacion = (
                 "El modelo elegido es el de salto, pero en este caso los dos tramos "
                 "llegan al mismo valor. El limite por izquierda, el limite por derecha "
-                "y f(a) valen {limite}."
-            ).format(limite=limite_izquierda)
+                f"y f(a) valen {limite_izquierda}."
+            )
+            conclusion_limite = "Como ambos limites laterales son iguales, el limite existe."
+            conclusion_continuidad = f"Como f(a) coincide con el limite, la funcion es continua en x = {self.a}."
         else:
             tipo = "Discontinuidad de salto"
             justificacion = (
-                "Por la izquierda la funcion se acerca a a + d2 = {izquierda}. "
-                "Por la derecha se acerca a a + d4 = {derecha}. "
+                f"Por la izquierda la funcion se acerca a a + d2 = {limite_izquierda}. "
+                f"Por la derecha se acerca a a + d4 = {limite_derecha}. "
                 "Como esos valores son distintos, el limite no existe."
-            ).format(izquierda=limite_izquierda, derecha=limite_derecha)
+            )
+            conclusion_limite = "Como los limites laterales son distintos, el limite no existe."
+            conclusion_continuidad = f"Como el limite no existe, la funcion no es continua en x = {self.a}."
+
+        procedimiento = self.pasos_inicio(funcion) + [
+            f"Para x < {self.a}, se usa f(x) = x + d2.",
+            f"Limite por izquierda = a + d2 = {self.a} + {self.d2} = {limite_izquierda}.",
+            f"Para x >= {self.a}, se usa f(x) = x + d4.",
+            f"Limite por derecha = a + d4 = {self.a} + {self.d4} = {limite_derecha}.",
+            conclusion_limite,
+            f"f(a) = a + d4 = {self.a} + {self.d4} = {valor_en_a}.",
+            conclusion_continuidad,
+            f"Clasificacion: {tipo}."
+        ]
 
         return {
             "caso": "salto",
-            "nombre_caso": "Discontinuidad de salto",
-            "funcion": "f(x) = x + {d2}, si x < {a}; f(x) = x + {d4}, si x >= {a}".format(
-                d2=self.d2,
-                d4=self.d4,
-                a=self.a
-            ),
+            "nombre_caso": tipo,
+            "modelo_generado": "Discontinuidad de salto",
+            "funcion": funcion,
             "limite_izquierda": limite_izquierda,
             "limite_derecha": limite_derecha,
             "limite_existe": limite_existe,
@@ -120,19 +149,30 @@ class AnalizadorFuncionTramos:
             "funcion_definida_en_a": True,
             "es_continua": es_continua,
             "tipo_discontinuidad": tipo,
-            "justificacion": justificacion
+            "justificacion": justificacion,
+            "procedimiento": procedimiento
         }
 
     def analizar_infinita(self):
         numerador = self.d5 + 1
+        funcion = f"f(x) = ({numerador}) / (x - {self.a})"
+
+        procedimiento = self.pasos_inicio(funcion) + [
+            f"Al evaluar x = {self.a}, el denominador x - a queda igual a cero.",
+            f"Como d5 + 1 = {numerador}, el numerador es positivo y no se anula.",
+            f"Cuando x se acerca a {self.a} por la izquierda, x - a es negativo y tiende a 0.",
+            "Por eso el limite por izquierda es -infinito.",
+            f"Cuando x se acerca a {self.a} por la derecha, x - a es positivo y tiende a 0.",
+            "Por eso el limite por derecha es +infinito.",
+            "Como los limites laterales son infinitos y no coinciden como numero real, el limite no existe.",
+            f"La funcion no esta definida en x = {self.a}, por eso no es continua en el punto.",
+            f"La discontinuidad es infinita y la asintota vertical es x = {self.a}."
+        ]
 
         return {
             "caso": "infinita",
             "nombre_caso": "Discontinuidad infinita",
-            "funcion": "f(x) = ({numerador}) / (x - {a})".format(
-                numerador=numerador,
-                a=self.a
-            ),
+            "funcion": funcion,
             "limite_izquierda": "-infinito",
             "limite_derecha": "+infinito",
             "limite_existe": False,
@@ -141,13 +181,14 @@ class AnalizadorFuncionTramos:
             "funcion_definida_en_a": False,
             "es_continua": False,
             "tipo_discontinuidad": "Discontinuidad infinita",
-            "asintota_vertical": "x = {a}".format(a=self.a),
+            "asintota_vertical": f"x = {self.a}",
             "justificacion": (
-                "El denominador x - a se hace cero cuando x = {a}. "
-                "Como d5 + 1 = {numerador}, al acercarse por la izquierda "
+                f"El denominador x - a se hace cero cuando x = {self.a}. "
+                f"Como d5 + 1 = {numerador}, al acercarse por la izquierda "
                 "la funcion baja sin limite y por la derecha sube sin limite. "
-                "Por eso hay una asintota vertical en x = {a}."
-            ).format(a=self.a, numerador=numerador)
+                f"Por eso hay una asintota vertical en x = {self.a}."
+            ),
+            "procedimiento": procedimiento
         }
 
     def evaluar(self, x):
@@ -175,16 +216,19 @@ class AnalizadorFuncionTramos:
         return (self.d5 + 1) / (x - self.a)
 
     def generar_tabla_valores(self):
-        desplazamientos = [-1, -0.1, -0.01, -0.001, 0.001, 0.01, 0.1, 1]
         tabla = []
 
-        for desplazamiento in desplazamientos:
+        for desplazamiento in DESPLAZAMIENTOS:
             x = self.a + desplazamiento
+            valor = self.evaluar(x)
+            valor_formateado = self.formatear_valor(valor)
 
             fila = {
                 "x": self.redondear(x),
+                "valor": valor,
+                "valor_formateado": valor_formateado,
                 "lado": "izquierda" if x < self.a else "derecha",
-                "f(x)": self.formatear_valor(self.evaluar(x))
+                "f(x)": valor_formateado
             }
 
             tabla.append(fila)
@@ -237,4 +281,4 @@ class AnalizadorFuncionTramos:
         if diferencia < 0:
             diferencia = diferencia * -1
 
-        return diferencia < 0.0000001
+        return diferencia < TOLERANCIA
