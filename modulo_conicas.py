@@ -146,7 +146,7 @@ class creador_ecuacion:
                 c = self.sqrt_manual(a2 + b2)
                 focos = [(h + c, k), (h - c, k)]
                 vertices = [(h + sqrt_a2, k), (h - sqrt_a2, k)]
-                pendiente_asintota = limpiar_decimales(sqrt_b2 / sqrt_a2) if sqrt_a2 != 0 else "∞"
+                pendiente_asintota = limpiar_decimales(sqrt_b2 / sqrt_a2) if sqrt_a2 != 0 else "división por 0"
                 asintotas = [f"y - {limpiar_decimales(k)} = ±{pendiente_asintota} * (x - {limpiar_decimales(h)})"]
                 pasos_canonicos.append(f"Hipérbola de eje horizontal. c = {limpiar_decimales(c)}")
                 pasos_canonicos.append(f"Dividiendo: a² = {limpiar_decimales(a2)}, b² = {limpiar_decimales(b2)}")
@@ -160,7 +160,7 @@ class creador_ecuacion:
                 c = self.sqrt_manual(a2 + b2)
                 focos = [(h, k + c), (h, k - c)]
                 vertices = [(h, k + sqrt_b2), (h, k - sqrt_b2)]
-                pendiente_asintota = limpiar_decimales(sqrt_b2 / sqrt_a2) if sqrt_a2 != 0 else "∞"
+                pendiente_asintota = limpiar_decimales(sqrt_b2 / sqrt_a2) if sqrt_a2 != 0 else "división por 0"
                 asintotas = [f"y - {limpiar_decimales(k)} = ±{pendiente_asintota} * (x - {limpiar_decimales(h)})"] 
                 pasos_canonicos.append(f"Hipérbola de eje vertical. c = {limpiar_decimales(c)}")
                 pasos_canonicos.append(f"Dividiendo: a² (con x) = {limpiar_decimales(a2)}, b² (con y) = {limpiar_decimales(b2)}")
