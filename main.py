@@ -214,6 +214,8 @@ class AplicacionCalculo(ctk.CTk):
             
             txt.insert("end", " Funcion generada:\n", "subtitulo")
             txt.insert("end", f" Punto critico:  x = {res_tramos['a']}\n", "normal")
+            for punto in res_tramos["puntos_criticos"]:
+                txt.insert("end", f" Motivo: {punto['motivo']}\n", "normal")
             txt.insert("end", f" {res_tramos['funcion']}\n\n", "math")
 
             txt.insert("end", " PROCEDIMIENTO MATEMATICO\n", "titulo")
