@@ -12,7 +12,7 @@ ctk.set_default_color_theme("blue")
 class AplicacionCalculo(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Proyecto Cálculo - Analizador de RUT")
+        self.title("Proyecto Calculo - Analizador de RUT")
         self.geometry("1000x700")
         
         # --- TOP FRAME: Ingreso de RUT ---
@@ -34,7 +34,7 @@ class AplicacionCalculo(ctk.CTk):
         self.tabs = ctk.CTkTabview(self)
         self.tabs.pack(fill="both", expand=True, padx=10, pady=10)
         
-        self.tab_conicas = self.tabs.add("Secciones Cónicas")
+        self.tab_conicas = self.tabs.add("Secciones Conicas")
         self.tab_tramos = self.tabs.add("Funciones por Tramos")
         
         self._setup_tab_conicas()
@@ -156,23 +156,129 @@ class AplicacionCalculo(ctk.CTk):
             self.campos_conicas_entries[nombre] = ent
             self.campos_conicas_labels[nombre] = lbl
 
+    def _redondear_conica(self, valor):
+        if isinstance(valor, int):
+            return valor
+        if isinstance(valor, float):
+            valor = round(valor, 4)
+            if int(valor) == valor:
+                return int(valor)
+            return valor
+        return valor
+
+    def _formatear_punto(self, punto):
+        if punto is None:
+            return "No definido"
+        x, y = punto
+        return f"({self._redondear_conica(x)}, {self._redondear_conica(y)})"
+
+    def _formatear_lista_puntos(self, puntos):
+        if not puntos:
+            return "No definido"
+        return ", ".join(self._formatear_punto(punto) for punto in puntos)
+
+    def _mostrar_resumen_conica(self, txt, conica, elementos):
+        txt.insert("end", "\n", "normal")
+        txt.insert("end", " RESUMEN DE LA CONICA\n", "titulo")
+        txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+
+        ecuacion = (
+            f"{self._redondear_conica(conica.A)}x^2 + "
+            f"{self._redondear_conica(conica.B)}y^2 + "
+            f"({self._redondear_conica(conica.C)})x + "
+            f"({self._redondear_conica(conica.D)})y + "
+            f"{self._redondear_conica(conica.E)} = 0"
+        )
+
+        txt.insert("end", f" Tipo de conica: {conica.tipo}\n", "resultado")
+        txt.insert("end", f" Ecuacion general: {ecuacion}\n", "math")
+
+        if conica.tipo == "circunferencia":
+            txt.insert("end", f" Centro: {self._formatear_punto(elementos.get('centro'))}\n", "resultado")
+            txt.insert("end", f" Radio: {self._redondear_conica(elementos.get('radio'))}\n", "resultado")
+            if elementos.get("observacion"):
+                txt.insert("end", f" Observacion: {elementos.get('observacion')}\n", "info")
+
+        elif conica.tipo == "elipse":
+            centro = elementos.get("centro")
+            h, k = centro
+            a2 = elementos.get("a2")
+            b2 = elementos.get("b2")
+            semieje_a = conica.sqrt_manual(a2)
+            semieje_b = conica.sqrt_manual(b2)
+
+            if a2 >= b2:
+                vertices = [(h + semieje_a, k), (h - semieje_a, k)]
+                covertices = [(h, k + semieje_b), (h, k - semieje_b)]
+                orientacion = "horizontal"
+            else:
+                vertices = [(h, k + semieje_b), (h, k - semieje_b)]
+                covertices = [(h + semieje_a, k), (h - semieje_a, k)]
+                orientacion = "vertical"
+
+            txt.insert("end", f" Centro: {self._formatear_punto(centro)}\n", "resultado")
+            txt.insert("end", f" Focos: {self._formatear_lista_puntos(elementos.get('focos'))}\n", "resultado")
+            txt.insert("end", f" Vertices: {self._formatear_lista_puntos(vertices)}\n", "resultado")
+            txt.insert("end", f" Covertices: {self._formatear_lista_puntos(covertices)}\n", "resultado")
+            txt.insert("end", f" Eje mayor: {self._redondear_conica(2 * max(semieje_a, semieje_b))} ({orientacion})\n", "resultado")
+            txt.insert("end", f" Eje menor: {self._redondear_conica(2 * min(semieje_a, semieje_b))}\n", "resultado")
+
+        elif conica.tipo == "hiperbola":
+            txt.insert("end", f" Centro: {self._formatear_punto(elementos.get('centro'))}\n", "resultado")
+            txt.insert("end", f" Focos: {self._formatear_lista_puntos(elementos.get('focos'))}\n", "resultado")
+            txt.insert("end", f" Vertices: {self._formatear_lista_puntos(elementos.get('vertices'))}\n", "resultado")
+            txt.insert("end", f" Asintotas: {', '.join(elementos.get('asintotas', []))}\n", "resultado")
+            txt.insert("end", f" a^2 = {self._redondear_conica(elementos.get('a2'))}, b^2 = {self._redondear_conica(elementos.get('b2'))}\n", "info")
+
+        elif conica.tipo == "parabola":
+            txt.insert("end", f" Vertice: {self._formatear_punto(elementos.get('vertice'))}\n", "resultado")
+            txt.insert("end", f" Foco: {self._formatear_punto(elementos.get('foco'))}\n", "resultado")
+            txt.insert("end", f" Directriz: {elementos.get('directriz')}\n", "resultado")
+            txt.insert("end", f" Lado recto: {self._redondear_conica(elementos.get('lado_recto'))}\n", "resultado")
+            txt.insert("end", f" p = {self._redondear_conica(elementos.get('p'))}\n", "info")
+
+        txt.insert("end", "\n", "normal")
+
     def _setup_tab_tramos(self):
         self.tab_tramos.columnconfigure(0, weight=1)
         self.tab_tramos.columnconfigure(1, weight=1)
         self.tab_tramos.rowconfigure(0, weight=1)
-        
-        # pasos y tabla
-        self.txt_pasos_tramos = ctk.CTkTextbox(self.tab_tramos, wrap="word", font=("Arial", 12))
-        self.txt_pasos_tramos.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+        # contenedor izquierdo para botones + paneles colapsables
+        self.frame_izq_tramos = ctk.CTkFrame(self.tab_tramos)
+        self.frame_izq_tramos.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_izq_tramos.columnconfigure(0, weight=1)
+
+        # boton para mostrar/ocultar el analisis
+        self.procedimientos_tramos_visibles = False
+        self.btn_toggle_procedimientos_tramos = ctk.CTkButton(
+            self.frame_izq_tramos,
+            text="Mostrar Analisis",
+            command=self._toggle_procedimientos_tramos,
+            font=("Arial", 13, "bold"),
+            height=38
+        )
+
+        # pasos y tabla (oculto por defecto)
+        self.txt_pasos_tramos = ctk.CTkTextbox(self.frame_izq_tramos, wrap="word", font=("Arial", 12))
         self._configurar_estilos(self.txt_pasos_tramos)
+
+        # boton para mostrar/ocultar campos manuales
+        self.campos_tramos_visibles = False
+        self.btn_toggle_campos_tramos = ctk.CTkButton(
+            self.frame_izq_tramos,
+            text="Llenar Informacion",
+            command=self._toggle_campos_tramos,
+            font=("Arial", 13, "bold"),
+            height=38
+        )
 
         # grafica
         self.grafico_tramos = GraficoTramos(self.tab_tramos)
         self.grafico_tramos.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
         # campos vacios para completar manualmente
-        self.frame_respuestas_tramos = ctk.CTkFrame(self.tab_tramos)
-        self.frame_respuestas_tramos.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=(0, 5))
+        self.frame_respuestas_tramos = ctk.CTkFrame(self.frame_izq_tramos)
 
         for columna in range(4):
             self.frame_respuestas_tramos.columnconfigure(columna, weight=1)
@@ -208,6 +314,40 @@ class AplicacionCalculo(ctk.CTk):
         self.ent_tipo_discontinuidad.grid(row=4, column=1, padx=5, pady=(3, 8), sticky="ew")
         self.ent_justificacion_limites.grid(row=4, column=2, columnspan=2, padx=5, pady=(3, 8), sticky="ew")
 
+    def _actualizar_pesos_tramos(self):
+        for r in range(4):
+            self.frame_izq_tramos.rowconfigure(r, weight=0)
+
+        if self.procedimientos_tramos_visibles and self.campos_tramos_visibles:
+            self.frame_izq_tramos.rowconfigure(1, weight=1)
+            self.frame_izq_tramos.rowconfigure(3, weight=1)
+        elif self.procedimientos_tramos_visibles:
+            self.frame_izq_tramos.rowconfigure(1, weight=1)
+        elif self.campos_tramos_visibles:
+            self.frame_izq_tramos.rowconfigure(3, weight=1)
+
+    def _toggle_procedimientos_tramos(self):
+        if self.procedimientos_tramos_visibles:
+            self.txt_pasos_tramos.grid_forget()
+            self.btn_toggle_procedimientos_tramos.configure(text="Mostrar Analisis")
+            self.procedimientos_tramos_visibles = False
+        else:
+            self.txt_pasos_tramos.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0, 5))
+            self.btn_toggle_procedimientos_tramos.configure(text="Ocultar Analisis")
+            self.procedimientos_tramos_visibles = True
+        self._actualizar_pesos_tramos()
+
+    def _toggle_campos_tramos(self):
+        if self.campos_tramos_visibles:
+            self.frame_respuestas_tramos.grid_forget()
+            self.btn_toggle_campos_tramos.configure(text="Llenar Informacion")
+            self.campos_tramos_visibles = False
+        else:
+            self.frame_respuestas_tramos.grid(row=3, column=0, sticky="nsew", padx=5, pady=(0, 5))
+            self.btn_toggle_campos_tramos.configure(text="Ocultar Informacion")
+            self.campos_tramos_visibles = True
+        self._actualizar_pesos_tramos()
+
     def _configurar_estilos(self, textbox):
         tw = textbox._textbox
         tw.tag_configure("titulo", font=("Arial", 15, "bold"), foreground="#4FC3F7",
@@ -242,6 +382,17 @@ class AplicacionCalculo(ctk.CTk):
         self.frame_campos_conicas.grid_forget()
         self.campos_conicas_visibles = False
         self.btn_toggle_campos.configure(text="Llenar Informacion")
+        self._actualizar_pesos_izq()
+
+        self.btn_toggle_procedimientos_tramos.grid_forget()
+        self.txt_pasos_tramos.grid_forget()
+        self.procedimientos_tramos_visibles = False
+        self.btn_toggle_procedimientos_tramos.configure(text="Mostrar Analisis")
+        self.btn_toggle_campos_tramos.grid_forget()
+        self.frame_respuestas_tramos.grid_forget()
+        self.campos_tramos_visibles = False
+        self.btn_toggle_campos_tramos.configure(text="Llenar Informacion")
+        self._actualizar_pesos_tramos()
 
         campos_respuestas = [
             self.ent_limite_izq,
@@ -266,10 +417,10 @@ class AplicacionCalculo(ctk.CTk):
             conica = creador_ecuacion(rut_input)
             
             if not conica.es_valido:
-                self.lbl_estado.configure(text="RUT Inválido: DV incorrecto", text_color="red")
+                self.lbl_estado.configure(text="RUT Invalido: DV incorrecto", text_color="red")
                 return
             
-            self.lbl_estado.configure(text="RUT Válido", text_color="green")
+            self.lbl_estado.configure(text="RUT Valido", text_color="green")
             
             # mostrar botones de procedimientos y campos
             self.btn_toggle_procedimientos.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 2))
@@ -311,6 +462,8 @@ class AplicacionCalculo(ctk.CTk):
             
             for paso in conica.procedimiento_inverso(elementos):
                 txt.insert("end", f" {paso}\n", "math")
+
+            self._mostrar_resumen_conica(txt, conica, elementos)
             
             # Dibujar grafica de la conica
             self.grafico_conicas.dibujar(conica, elementos)
@@ -321,6 +474,9 @@ class AplicacionCalculo(ctk.CTk):
             # === FUNCIONES POR TRAMOS ===
             analizador_tramos = AnalizadorFuncionTramos(conica.digitos)
             res_tramos = analizador_tramos.analizar()
+
+            self.btn_toggle_procedimientos_tramos.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 2))
+            self.btn_toggle_campos_tramos.grid(row=2, column=0, sticky="ew", padx=5, pady=(2, 5))
             
             txt = self.txt_pasos_tramos
             
@@ -358,14 +514,24 @@ class AplicacionCalculo(ctk.CTk):
             else:
                 continuidad = "No"
 
+            if res_tramos["funcion_definida_en_a"]:
+                definida_en_a = "Si"
+            else:
+                definida_en_a = "No"
+
             txt.insert("end", " RESUMEN FINAL\n", "titulo")
             txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
             txt.insert("end", f" Limite por izquierda: {res_tramos['limite_izquierda']}\n", "resultado")
             txt.insert("end", f" Limite por derecha: {res_tramos['limite_derecha']}\n", "resultado")
             txt.insert("end", f" Existe el limite: {existe_limite}\n", "resultado")
             txt.insert("end", f" Valor de f(a): {valor_en_a}\n", "resultado")
+            txt.insert("end", f" Funcion definida en a: {definida_en_a}\n", "resultado")
             txt.insert("end", f" Es continua en x = {res_tramos['a']}: {continuidad}\n", "resultado")
             txt.insert("end", f" Tipo: {res_tramos['tipo_discontinuidad']}\n", "resultado")
+            if "funcion_simplificada" in res_tramos:
+                txt.insert("end", f" Funcion simplificada: {res_tramos['funcion_simplificada']}\n", "info")
+            if "asintota_vertical" in res_tramos:
+                txt.insert("end", f" Asintota vertical: {res_tramos['asintota_vertical']}\n", "info")
             txt.insert("end", f" Justificacion: {res_tramos['justificacion']}\n\n", "info")
             
             txt.insert("end", " EVIDENCIA COMPUTACIONAL\n", "titulo")

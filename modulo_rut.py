@@ -40,7 +40,7 @@ class AnalizadorRut:
         if "-" in self.rut_completo:
             partes = self.rut_completo.split("-")
             if len(partes) != 2 or len(partes[1].strip()) != 1:
-                raise ValueError("Debe haber un dígito o 'K' después del guion.")
+                raise ValueError("Debe haber un digito o 'K' despues del guion.")
                 
         self.rut_limpio = self._limpiar_rut(self.rut_completo).replace(" ", "")
         self.cuerpo, self.dv_ingresado = self._split_rut()
@@ -58,7 +58,7 @@ class AnalizadorRut:
 
     def validar_cuerpo(self) -> None:
         if not self.cuerpo.isdigit():
-            raise ValueError("El cuerpo del RUT debe contener solo dígitos.")
+            raise ValueError("El cuerpo del RUT debe contener solo digitos.")
     
     def obtener_digitos(self) -> list[int]:
         return [int(d) for d in self.cuerpo]
