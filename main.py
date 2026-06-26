@@ -68,6 +68,44 @@ class AplicacionCalculo(ctk.CTk):
         self.grafico_tramos = GraficoTramos(self.tab_tramos)
         self.grafico_tramos.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
+        # campos vacios para completar manualmente
+        self.frame_respuestas_tramos = ctk.CTkFrame(self.tab_tramos)
+        self.frame_respuestas_tramos.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=(0, 5))
+
+        for columna in range(4):
+            self.frame_respuestas_tramos.columnconfigure(columna, weight=1)
+
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Analisis manual", font=("Arial", 12, "bold")).grid(
+            row=0, column=0, columnspan=4, sticky="w", padx=8, pady=(6, 2)
+        )
+
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Limite izquierda").grid(row=1, column=0, padx=5, sticky="w")
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Limite derecha").grid(row=1, column=1, padx=5, sticky="w")
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Existe limite").grid(row=1, column=2, padx=5, sticky="w")
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="f(a)").grid(row=1, column=3, padx=5, sticky="w")
+
+        self.ent_limite_izq = ctk.CTkEntry(self.frame_respuestas_tramos)
+        self.ent_limite_der = ctk.CTkEntry(self.frame_respuestas_tramos)
+        self.ent_existe_limite = ctk.CTkEntry(self.frame_respuestas_tramos)
+        self.ent_valor_a = ctk.CTkEntry(self.frame_respuestas_tramos)
+
+        self.ent_limite_izq.grid(row=2, column=0, padx=5, pady=3, sticky="ew")
+        self.ent_limite_der.grid(row=2, column=1, padx=5, pady=3, sticky="ew")
+        self.ent_existe_limite.grid(row=2, column=2, padx=5, pady=3, sticky="ew")
+        self.ent_valor_a.grid(row=2, column=3, padx=5, pady=3, sticky="ew")
+
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Continuidad").grid(row=3, column=0, padx=5, sticky="w")
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Tipo").grid(row=3, column=1, padx=5, sticky="w")
+        ctk.CTkLabel(self.frame_respuestas_tramos, text="Justificacion").grid(row=3, column=2, columnspan=2, padx=5, sticky="w")
+
+        self.ent_continuidad = ctk.CTkEntry(self.frame_respuestas_tramos)
+        self.ent_tipo_discontinuidad = ctk.CTkEntry(self.frame_respuestas_tramos)
+        self.ent_justificacion_limites = ctk.CTkEntry(self.frame_respuestas_tramos)
+
+        self.ent_continuidad.grid(row=4, column=0, padx=5, pady=(3, 8), sticky="ew")
+        self.ent_tipo_discontinuidad.grid(row=4, column=1, padx=5, pady=(3, 8), sticky="ew")
+        self.ent_justificacion_limites.grid(row=4, column=2, columnspan=2, padx=5, pady=(3, 8), sticky="ew")
+
     def _configurar_estilos(self, textbox):
         tw = textbox._textbox
         tw.tag_configure("titulo", font=("Arial", 15, "bold"), foreground="#4FC3F7",
@@ -93,6 +131,19 @@ class AplicacionCalculo(ctk.CTk):
         self.txt_pasos_tramos.delete(1.0, "end")
         self.grafico_conicas.limpiar()
         self.grafico_tramos.limpiar()
+
+        campos_respuestas = [
+            self.ent_limite_izq,
+            self.ent_limite_der,
+            self.ent_existe_limite,
+            self.ent_valor_a,
+            self.ent_continuidad,
+            self.ent_tipo_discontinuidad,
+            self.ent_justificacion_limites
+        ]
+
+        for campo in campos_respuestas:
+            campo.delete(0, "end")
 
     def analizar_rut(self):
         rut_input = self.ent_rut.get()
