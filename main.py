@@ -45,11 +45,12 @@ class AplicacionCalculo(ctk.CTk):
         self.tab_conicas.columnconfigure(1, weight=1)
         self.tab_conicas.rowconfigure(0, weight=1)
         
-        # contenedor izquierdo para boton + textbox
+        # contenedor izquierdo para botones + paneles colapsables
         self.frame_izq_conicas = ctk.CTkFrame(self.tab_conicas)
         self.frame_izq_conicas.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
-        self.frame_izq_conicas.rowconfigure(1, weight=1)
         self.frame_izq_conicas.columnconfigure(0, weight=1)
+        # row 0 = btn procedimientos, row 1 = textbox, row 2 = btn campos, row 3 = campos
+        # los pesos se ajustan dinamicamente
 
         # boton para mostrar/ocultar procedimientos
         self.procedimientos_visibles = False
@@ -66,9 +67,44 @@ class AplicacionCalculo(ctk.CTk):
         self.txt_pasos_conicas = ctk.CTkTextbox(self.frame_izq_conicas, wrap="word", font=("Arial", 12))
         self._configurar_estilos(self.txt_pasos_conicas)
 
-        # grafica
+        # boton para mostrar/ocultar campos de llenado
+        self.campos_conicas_visibles = False
+        self.btn_toggle_campos = ctk.CTkButton(
+            self.frame_izq_conicas,
+            text="Llenar Informacion",
+            command=self._toggle_campos_conicas,
+            font=("Arial", 13, "bold"),
+            height=38
+        )
+        # no se muestra hasta que se analice un RUT
+
+        # frame scrollable para campos vacios de la conica
+        self.frame_campos_conicas = ctk.CTkScrollableFrame(
+            self.frame_izq_conicas,
+            label_text="Elementos de la Conica",
+            label_font=("Arial", 13, "bold")
+        )
+        self.frame_campos_conicas.columnconfigure(1, weight=1)
+        self.campos_conicas_entries = {}
+        self.campos_conicas_labels = {}
+
+        # grafica (no se toca)
         self.grafico_conicas = GraficoConicas(self.tab_conicas)
         self.grafico_conicas.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+    def _actualizar_pesos_izq(self):
+        """Ajusta los row weights del frame izquierdo segun que paneles estan visibles."""
+        # resetear todos los pesos
+        for r in range(4):
+            self.frame_izq_conicas.rowconfigure(r, weight=0)
+        
+        if self.procedimientos_visibles and self.campos_conicas_visibles:
+            self.frame_izq_conicas.rowconfigure(1, weight=1)
+            self.frame_izq_conicas.rowconfigure(3, weight=1)
+        elif self.procedimientos_visibles:
+            self.frame_izq_conicas.rowconfigure(1, weight=1)
+        elif self.campos_conicas_visibles:
+            self.frame_izq_conicas.rowconfigure(3, weight=1)
 
     def _toggle_procedimientos(self):
         if self.procedimientos_visibles:
@@ -79,6 +115,46 @@ class AplicacionCalculo(ctk.CTk):
             self.txt_pasos_conicas.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0, 5))
             self.btn_toggle_procedimientos.configure(text="Ocultar Procedimientos")
             self.procedimientos_visibles = True
+        self._actualizar_pesos_izq()
+
+    def _toggle_campos_conicas(self):
+        if self.campos_conicas_visibles:
+            self.frame_campos_conicas.grid_forget()
+            self.btn_toggle_campos.configure(text="Llenar Informacion")
+            self.campos_conicas_visibles = False
+        else:
+            self.frame_campos_conicas.grid(row=3, column=0, sticky="nsew", padx=5, pady=(0, 5))
+            self.btn_toggle_campos.configure(text="Ocultar Informacion")
+            self.campos_conicas_visibles = True
+        self._actualizar_pesos_izq()
+
+    def _crear_campos_conicas(self, tipo):
+        """Crea los campos vacios correspondientes al tipo de conica detectada."""
+        # limpiar campos anteriores
+        for widget in self.frame_campos_conicas.winfo_children():
+            widget.destroy()
+        self.campos_conicas_entries.clear()
+        self.campos_conicas_labels.clear()
+
+        # definir campos segun tipo de conica
+        if tipo == "circunferencia":
+            campos = ["Centro (h, k)", "Radio"]
+        elif tipo == "elipse":
+            campos = ["Centro (h, k)", "Focos", "Vertices", "Eje mayor", "Eje menor"]
+        elif tipo == "hiperbola":
+            campos = ["Centro (h, k)", "Focos", "Vertices", "Eje transverso", "Eje conjugado", "Asintotas"]
+        elif tipo == "parabola":
+            campos = ["Vertice (h, k)", "Foco", "Directriz", "Lado recto"]
+        else:
+            campos = ["Centro (h, k)", "Focos", "Vertices"]
+
+        for i, nombre in enumerate(campos):
+            lbl = ctk.CTkLabel(self.frame_campos_conicas, text=nombre + ":", font=("Arial", 12))
+            lbl.grid(row=i, column=0, padx=(8, 5), pady=4, sticky="w")
+            ent = ctk.CTkEntry(self.frame_campos_conicas, placeholder_text="Completar...", font=("Arial", 12))
+            ent.grid(row=i, column=1, padx=(5, 8), pady=4, sticky="ew")
+            self.campos_conicas_entries[nombre] = ent
+            self.campos_conicas_labels[nombre] = lbl
 
     def _setup_tab_tramos(self):
         self.tab_tramos.columnconfigure(0, weight=1)
@@ -157,11 +233,15 @@ class AplicacionCalculo(ctk.CTk):
         self.txt_pasos_tramos.delete(1.0, "end")
         self.grafico_conicas.limpiar()
         self.grafico_tramos.limpiar()
-        # ocultar boton y procedimientos al limpiar
+        # ocultar botones y paneles al limpiar
         self.btn_toggle_procedimientos.grid_forget()
         self.txt_pasos_conicas.grid_forget()
         self.procedimientos_visibles = False
         self.btn_toggle_procedimientos.configure(text="Mostrar Procedimientos")
+        self.btn_toggle_campos.grid_forget()
+        self.frame_campos_conicas.grid_forget()
+        self.campos_conicas_visibles = False
+        self.btn_toggle_campos.configure(text="Llenar Informacion")
 
         campos_respuestas = [
             self.ent_limite_izq,
@@ -191,8 +271,9 @@ class AplicacionCalculo(ctk.CTk):
             
             self.lbl_estado.configure(text="RUT Válido", text_color="green")
             
-            # mostrar boton de procedimientos
-            self.btn_toggle_procedimientos.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 5))
+            # mostrar botones de procedimientos y campos
+            self.btn_toggle_procedimientos.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 2))
+            self.btn_toggle_campos.grid(row=2, column=0, sticky="ew", padx=5, pady=(2, 5))
             
             # Formatear texto conicas con estilos visuales
             txt = self.txt_pasos_conicas
@@ -233,6 +314,9 @@ class AplicacionCalculo(ctk.CTk):
             
             # Dibujar grafica de la conica
             self.grafico_conicas.dibujar(conica, elementos)
+            
+            # Crear campos vacios segun tipo de conica
+            self._crear_campos_conicas(conica.tipo)
             
             # === FUNCIONES POR TRAMOS ===
             analizador_tramos = AnalizadorFuncionTramos(conica.digitos)
