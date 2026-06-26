@@ -1,5 +1,10 @@
 from modulo_rut import AnalizadorRut, DigitoVerificador
 
+def limpiar_decimales(v):
+    if v == int(v):
+        return str(int(v))
+    return f"{round(v, 4)}"
+
 class creador_ecuacion:
     def __init__(self, rut):
         self.rut = AnalizadorRut(rut)
@@ -20,29 +25,29 @@ class creador_ecuacion:
         E = d1 + d3 + d5 + d7
 
         pasos = []
-        pasos.append(f"A = (d1+d2)/v = ({d1}+{d2})/{v} = {A}")
-        pasos.append(f"B = (d3+d4)/v = ({d3}+{d4})/{v} = {B}")
-        pasos.append(f"C = -(d5+d6) = -({d5}+{d6}) = {C}")
-        pasos.append(f"D = -(d7+d8) = -({d7}+{d8}) = {D}")
-        pasos.append(f"E = d1+d3+d5+d7 = {d1}+{d3}+{d5}+{d7} = {E}")
+        pasos.append(f"A = (d1+d2)/v = ({d1}+{d2})/{v} = {limpiar_decimales(A)}")
+        pasos.append(f"B = (d3+d4)/v = ({d3}+{d4})/{v} = {limpiar_decimales(B)}")
+        pasos.append(f"C = -(d5+d6) = -({d5}+{d6}) = {limpiar_decimales(C)}")
+        pasos.append(f"D = -(d7+d8) = -({d7}+{d8}) = {limpiar_decimales(D)}")
+        pasos.append(f"E = d1+d3+d5+d7 = {d1}+{d3}+{d5}+{d7} = {limpiar_decimales(E)}")
 
         if d8 % 2 != 0:
             B = -B
-            pasos.append(f"si d8 = {d8} es impar, B es reemplazado por -B = {B}")
+            pasos.append(f"d8 = {d8} es impar -> B se reemplaza por -B = {limpiar_decimales(B)}")
 
         if d1 == d2:
             B = A
-            pasos.append(f"d1 = d2 = {d1}, se impone B = A = {A}")
+            pasos.append(f"d1 = d2 = {d1} -> se impone B = A = {limpiar_decimales(A)}")
 
         if (d5 + d6) % 3 == 0:
             if d7 % 2 == 0:
                 B = 0
-                pasos.append(f"si (d5+d6) = {d5+d6} es múltiplo de 3 y d7 = {d7} es par, B = 0 (parábola vertical)")
+                pasos.append(f"(d5+d6) = {d5+d6} es múltiplo de 3 y d7 = {d7} es par -> B = 0 (parábola vertical)")
             else:
                 A = 0
-                pasos.append(f"si (d5+d6) = {d5+d6} es múltiplo de 3 y d7 = {d7} es impar, A = 0 (parábola horizontal)")
+                pasos.append(f"(d5+d6) = {d5+d6} es múltiplo de 3 y d7 = {d7} es impar -> A = 0 (parábola horizontal)")
 
-        pasos.append(f"Ecuación general: {A}x² + {B}y² + ({C})x + ({D})y + {E} = 0")
+        pasos.append(f"Ecuación general: {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
         return A, B, C, D, E, pasos
 
     def clasificar_conica(self):
@@ -68,23 +73,25 @@ class creador_ecuacion:
     def a_forma_canonica(self):
         A, B, C, D, E = self.A, self.B, self.C, self.D, self.E
         pasos = []
-        pasos.append(f"Partimos de: {A}x² + {B}y² + ({C})x + ({D})y + {E} = 0")
-
+        pasos.append(f"Partimos de: {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
         h = -C / (2 * A) if A != 0 else None
         k = -D / (2 * B) if B != 0 else None
-
         lado_derecho = 0
+
         if A != 0:
-            termino_x = (C**2) / (4 * A)
+            termino_x = (C ** 2) / (4 * A)
             lado_derecho += termino_x
-            pasos.append(f"Completar cuadrado en x: A(x + {-C/(2*A)})², se suma {termino_x} al lado derecho")
+            pasos.append(f"Completar cuadrado en x: {limpiar_decimales(A)}(x - ({limpiar_decimales(h)}))²")
+            pasos.append(f"  Se suma {limpiar_decimales(A)} * ({limpiar_decimales(h)})² = {limpiar_decimales(termino_x)} al lado derecho")
+
         if B != 0:
-            termino_y = (D**2) / (4 * B)
+            termino_y = (D ** 2) / (4 * B)
             lado_derecho += termino_y
-            pasos.append(f"Completar cuadrado en y: B(y + {-D/(2*B)})², se suma {termino_y} al lado derecho")
+            pasos.append(f"Completar cuadrado en y: {limpiar_decimales(B)}(y - ({limpiar_decimales(k)}))²")
+            pasos.append(f"  Se suma {limpiar_decimales(B)} * ({limpiar_decimales(k)})² = {limpiar_decimales(termino_y)} al lado derecho")
 
         lado_derecho -= E
-        pasos.append(f"Restando E = {E}: lado derecho = {lado_derecho}")
+        pasos.append(f"Trasladando E = {limpiar_decimales(E)} al lado derecho: lado derecho = {limpiar_decimales(lado_derecho)}")
 
         return h, k, lado_derecho, pasos
 
@@ -94,66 +101,139 @@ class creador_ecuacion:
         resultado = {"tipo": tipo, "pasos_canonicos": pasos_canonicos}
 
         if tipo == "circunferencia":
+            if lado_derecho <= 0:
+                pasos_canonicos.append("El lado derecho es <= 0: la ecuación no representa una circunferencia real.")
+                resultado.update({"centro": (h, k), "radio": 0})
+                return resultado
             r = self.sqrt_manual(lado_derecho / self.A)
             resultado["centro"] = (h, k)
             resultado["radio"] = r
-            pasos_canonicos.append(f"Forma canónica: (x - {h})² + (y - {k})² = {round(r,4)}²")
+            pasos_canonicos.append(f"Dividiendo por A = {limpiar_decimales(self.A)}:")
+            pasos_canonicos.append(f"(x - {limpiar_decimales(h)})² + (y - {limpiar_decimales(k)})² = {limpiar_decimales(lado_derecho / self.A)}")
+            pasos_canonicos.append(f"Radio r = √{limpiar_decimales(lado_derecho / self.A)} = {limpiar_decimales(r)}")
+            pasos_canonicos.append(f"Forma canónica: (x - {limpiar_decimales(h)})² + (y - {limpiar_decimales(k)})² = {limpiar_decimales(r)}²")
 
         elif tipo == "elipse":
             a2 = lado_derecho / self.A
             b2 = lado_derecho / self.B
+            if a2 <= 0 or b2 <= 0:
+                pasos_canonicos.append("El lado derecho produce a² o b² negativos: la ecuación no representa una elipse real.")
+                resultado.update({"centro": (h, k), "a2": a2, "b2": b2, "c": 0, "focos": []})
+                return resultado
             if a2 >= b2:
                 c = self.sqrt_manual(a2 - b2)
                 focos = [(h + c, k), (h - c, k)]
-                pasos_canonicos.append(f"Eje mayor horizontal: a² = {a2}, b² = {b2}")
+                pasos_canonicos.append(f"Dividiendo por {limpiar_decimales(lado_derecho)}: a² = {limpiar_decimales(a2)}, b² = {limpiar_decimales(b2)}")
+                pasos_canonicos.append(f"Como a² >= b², el eje mayor es horizontal")
+                pasos_canonicos.append(f"c = √(a²-b²) = √({limpiar_decimales(a2)}-{limpiar_decimales(b2)}) = {limpiar_decimales(c)}")
             else:
                 c = self.sqrt_manual(b2 - a2)
                 focos = [(h, k + c), (h, k - c)]
-                pasos_canonicos.append(f"Eje mayor vertical: a²={b2}, b²={a2}")
+                pasos_canonicos.append(f"Dividiendo por {limpiar_decimales(lado_derecho)}: a² = {limpiar_decimales(a2)}, b² = {limpiar_decimales(b2)}")
+                pasos_canonicos.append(f"Como b² > a², el eje mayor es vertical")
+                pasos_canonicos.append(f"c = √(b²-a²) = √({limpiar_decimales(b2)}-{limpiar_decimales(a2)}) = {limpiar_decimales(c)}")
             resultado.update({"centro": (h, k), "a2": a2, "b2": b2, "c": c, "focos": focos})
-            pasos_canonicos.append(f"Forma canónica: (x-{h})²/{a2} + (y-{k})²/{b2} = 1")
+            pasos_canonicos.append(f"Forma canónica: (x-{limpiar_decimales(h)})²/{limpiar_decimales(a2)} + (y-{limpiar_decimales(k)})²/{limpiar_decimales(b2)} = 1")
 
         elif tipo == "hiperbola":
             a2 = lado_derecho / self.A
-            b2 = -(lado_derecho / self.B)
+            b2_raw = lado_derecho / self.B
+            b2 = -b2_raw if b2_raw < 0 else b2_raw
             c = self.sqrt_manual(a2 + b2)
             focos = [(h + c, k), (h - c, k)]
             resultado.update({"centro": (h, k), "a2": a2, "b2": b2, "c": c, "focos": focos})
-            pasos_canonicos.append(f"Forma canónica: (x-{h})²/{a2} - (y-{k})²/{b2} = 1")
+            pasos_canonicos.append(f"Dividiendo: a² = {limpiar_decimales(a2)}, b² = {limpiar_decimales(b2)}")
+            pasos_canonicos.append(f"c = √(a²+b²) = √({limpiar_decimales(a2)}+{limpiar_decimales(b2)}) = {limpiar_decimales(c)}")
+            pasos_canonicos.append(f"Forma canónica: (x-{limpiar_decimales(h)})²/{limpiar_decimales(a2)} - (y-{limpiar_decimales(k)})²/{limpiar_decimales(b2)} = 1")
 
         elif tipo == "parabola":
             if self.A == 0:
-                p = -self.D / (2 * self.B) if self.B != 0 else 0
-                resultado.update({"vertice": (h, k), "p": p})
-                pasos_canonicos.append(f"Parábola horizontal. Vértice: ({h}, {k})")
+                vertice_y = k
+                vertice_x = (-self.B * k**2 - self.D * k - self.E) / self.C if self.C != 0 else 0
+                resultado.update({"vertice": (vertice_x, vertice_y), "p": None})
+                pasos_canonicos.append(f"Parábola horizontal (A = 0)")
+                pasos_canonicos.append(f"Completando cuadrado en y: k = -D/(2B) = {limpiar_decimales(k)}")
+                pasos_canonicos.append(f"Vértice: ({limpiar_decimales(vertice_x)}, {limpiar_decimales(vertice_y)})")
+                pasos_canonicos.append(f"Forma: (y - {limpiar_decimales(k)})² = (1/B·C)·(x - {limpiar_decimales(vertice_x)}) [eje horizontal]")
             else:
-                p = -self.D / (2 * self.A) if self.A != 0 else 0
-                resultado.update({"vertice": (h, k), "p": p})
-                pasos_canonicos.append(f"Parábola vertical. Vértice: ({h}, {k})")
+                vertice_x = h
+                vertice_y = (-self.A * h**2 - self.C * h - self.E) / self.D if self.D != 0 else 0
+                resultado.update({"vertice": (vertice_x, vertice_y), "p": None})
+                pasos_canonicos.append(f"Parábola vertical (B = 0)")
+                pasos_canonicos.append(f"Completando cuadrado en x: h = -C/(2A) = {limpiar_decimales(h)}")
+                pasos_canonicos.append(f"Vértice: ({limpiar_decimales(vertice_x)}, {limpiar_decimales(vertice_y)})")
+                pasos_canonicos.append(f"Forma: (x - {limpiar_decimales(h)})² = (1/A·D)·(y - {limpiar_decimales(vertice_y)}) [eje vertical]")
 
         return resultado
 
     def procedimiento_inverso(self, elementos):
-        pasos = ["Procedimiento inverso: canónica a general"]
+        pasos = ["Procedimiento inverso: forma canónica -> ecuación general"]
         tipo = self.tipo
+        A, B, C, D, E = self.A, self.B, self.C, self.D, self.E
 
-        if tipo in ("circunferencia", "elipse"):
+        if tipo == "circunferencia":
             h, k = elementos["centro"]
-            pasos.append(f"Partimos de la forma canónica con centro ({h},{k})")
-            pasos.append(f"Expandiendo (x-{h})²: x² - {2*h}x + {h**2}")
-            pasos.append(f"Expandiendo (y-{k})²: y² - {2*k}y + {k**2}")
-            pasos.append(f"Multiplicando por A={self.A} y B={self.B} respectivamente y reordenando:")
-            pasos.append(f"Se obtiene: {self.A}x² + {self.B}y² + ({self.C})x + ({self.D})y + {self.E} = 0")
+            r = elementos["radio"]
+            pasos.append(f"Partimos de: (x - {limpiar_decimales(h)})² + (y - {limpiar_decimales(k)})² = {limpiar_decimales(r)}²")
+            pasos.append(f"Expandiendo (x - {limpiar_decimales(h)})²:")
+            pasos.append(f"  = x² - {limpiar_decimales(2*h)}x + {limpiar_decimales(h**2)}")
+            pasos.append(f"Expandiendo (y - {limpiar_decimales(k)})²:")
+            pasos.append(f"  = y² - {limpiar_decimales(2*k)}y + {limpiar_decimales(k**2)}")
+            pasos.append(f"Sumando ambas expansiones e igualando a {limpiar_decimales(r**2)}:")
+            pasos.append(f"  x² - {limpiar_decimales(2*h)}x + {limpiar_decimales(h**2)} + y² - {limpiar_decimales(2*k)}y + {limpiar_decimales(k**2)} = {limpiar_decimales(r**2)}")
+            pasos.append(f"Pasando {limpiar_decimales(r**2)} al lado izquierdo y reordenando:")
+            pasos.append(f"  x² + y² - {limpiar_decimales(2*h)}x - {limpiar_decimales(2*k)}y + {limpiar_decimales(h**2 + k**2 - r**2)} = 0")
+            pasos.append(f"Multiplicando por A = {limpiar_decimales(A)}:")
+            pasos.append(f"  {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
+
+        elif tipo == "elipse":
+            h, k = elementos["centro"]
+            a2, b2 = elementos["a2"], elementos["b2"]
+            pasos.append(f"Partimos de: (x - {limpiar_decimales(h)})²/{limpiar_decimales(a2)} + (y - {limpiar_decimales(k)})²/{limpiar_decimales(b2)} = 1")
+            pasos.append(f"Multiplicando todo por {limpiar_decimales(a2*b2)} (producto a²·b²):")
+            pasos.append(f"  {limpiar_decimales(b2)}(x - {limpiar_decimales(h)})² + {limpiar_decimales(a2)}(y - {limpiar_decimales(k)})² = {limpiar_decimales(a2*b2)}")
+            pasos.append(f"Expandiendo {limpiar_decimales(b2)}(x - {limpiar_decimales(h)})²:")
+            pasos.append(f"  = {limpiar_decimales(b2)}x² - {limpiar_decimales(2*h*b2)}x + {limpiar_decimales(b2*h**2)}")
+            pasos.append(f"Expandiendo {limpiar_decimales(a2)}(y - {limpiar_decimales(k)})²:")
+            pasos.append(f"  = {limpiar_decimales(a2)}y² - {limpiar_decimales(2*k*a2)}y + {limpiar_decimales(a2*k**2)}")
+            suma_cte = b2 * h**2 + a2 * k**2 - a2 * b2
+            pasos.append(f"Sumando, pasando {limpiar_decimales(a2*b2)} al izquierdo y reordenando:")
+            pasos.append(f"  {limpiar_decimales(b2)}x² + {limpiar_decimales(a2)}y² - {limpiar_decimales(2*h*b2)}x - {limpiar_decimales(2*k*a2)}y + {limpiar_decimales(suma_cte)} = 0")
+            pasos.append(f"Reconocemos A={limpiar_decimales(A)}, B={limpiar_decimales(B)}, C={limpiar_decimales(C)}, D={limpiar_decimales(D)}, E={limpiar_decimales(E)}:")
+            pasos.append(f"  {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
 
         elif tipo == "hiperbola":
             h, k = elementos["centro"]
-            pasos.append(f"Partimos de la forma canónica hipérbola con centro ({h},{k})")
-            pasos.append(f"Expandiendo y multiplicando por A = {self.A} y B = {self.B}:")
-            pasos.append(f"Se obtiene: {self.A}x² + {self.B}y² + ({self.C})x + ({self.D})y + {self.E} = 0")
+            a2, b2 = elementos["a2"], elementos["b2"]
+            pasos.append(f"Partimos de: (x - {limpiar_decimales(h)})²/{limpiar_decimales(a2)} - (y - {limpiar_decimales(k)})²/{limpiar_decimales(b2)} = 1")
+            pasos.append(f"Multiplicando todo por {limpiar_decimales(a2*b2)}:")
+            pasos.append(f"  {limpiar_decimales(b2)}(x - {limpiar_decimales(h)})² - {limpiar_decimales(a2)}(y - {limpiar_decimales(k)})² = {limpiar_decimales(a2*b2)}")
+            pasos.append(f"Expandiendo {limpiar_decimales(b2)}(x - {limpiar_decimales(h)})²:")
+            pasos.append(f"  = {limpiar_decimales(b2)}x² - {limpiar_decimales(2*h*b2)}x + {limpiar_decimales(b2*h**2)}")
+            pasos.append(f"Expandiendo {limpiar_decimales(a2)}(y - {limpiar_decimales(k)})²:")
+            pasos.append(f"  = {limpiar_decimales(a2)}y² - {limpiar_decimales(2*k*a2)}y + {limpiar_decimales(a2*k**2)}")
+            suma_cte = b2 * h**2 - a2 * k**2 - a2 * b2
+            pasos.append(f"Restando la segunda expansión, pasando {limpiar_decimales(a2*b2)} al izquierdo:")
+            pasos.append(f"  {limpiar_decimales(b2)}x² - {limpiar_decimales(a2)}y² - {limpiar_decimales(2*h*b2)}x + {limpiar_decimales(2*k*a2)}y + {limpiar_decimales(suma_cte)} = 0")
+            pasos.append(f"Reconocemos A={limpiar_decimales(A)}, B={limpiar_decimales(B)}, C={limpiar_decimales(C)}, D={limpiar_decimales(D)}, E={limpiar_decimales(E)}:")
+            pasos.append(f"  {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
 
         elif tipo == "parabola":
-            pasos.append(f"Expandiendo la forma canónica de la parábola:")
-            pasos.append(f"Se obtiene: {self.A}x² + {self.B}y² + ({self.C})x + ({self.D})y + {self.E} = 0")
+            vx, vy = elementos["vertice"]
+            if A == 0:
+                pasos.append(f"Parábola horizontal con vértice ({limpiar_decimales(vx)}, {limpiar_decimales(vy)})")
+                pasos.append(f"Forma canónica: (y - {limpiar_decimales(vy)})² proporcional a (x - {limpiar_decimales(vx)})")
+                pasos.append(f"Expandiendo (y - {limpiar_decimales(vy)})²:")
+                pasos.append(f"  = y² - {limpiar_decimales(2*vy)}y + {limpiar_decimales(vy**2)}")
+                pasos.append(f"Multiplicando por B = {limpiar_decimales(B)} y reordenando con C, D, E:")
+                pasos.append(f"  {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
+            else:
+                pasos.append(f"Parábola vertical con vértice ({limpiar_decimales(vx)}, {limpiar_decimales(vy)})")
+                pasos.append(f"Forma canónica: (x - {limpiar_decimales(vx)})² proporcional a (y - {limpiar_decimales(vy)})")
+                pasos.append(f"Expandiendo (x - {limpiar_decimales(vx)})²:")
+                pasos.append(f"  = x² - {limpiar_decimales(2*vx)}x + {limpiar_decimales(vx**2)}")
+                pasos.append(f"Multiplicando por A = {limpiar_decimales(A)} y reordenando con C, D, E:")
+                pasos.append(f"  {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
 
         return pasos
     
@@ -180,3 +260,8 @@ class creador_ecuacion:
         for paso in self.procedimiento_inverso(elementos):
             print(" ", paso)
 
+rut_prueba = "12345678" 
+
+print(f"--- PROBANDO MÓDULO DE CÓNICAS CON RUT: {rut_prueba} ---")
+conica = creador_ecuacion(rut_prueba)
+conica.imprimir() 
