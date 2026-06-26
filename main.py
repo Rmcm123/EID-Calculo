@@ -172,6 +172,30 @@ class AplicacionCalculo(ctk.CTk):
                 txt.insert("end", f" {paso}\n", "math")
 
             txt.insert("end", "\n", "normal")
+
+            valor_en_a = res_tramos["valor_en_a"]
+            if valor_en_a is None:
+                valor_en_a = "No definida"
+
+            if res_tramos["limite_existe"]:
+                existe_limite = "Si"
+            else:
+                existe_limite = "No"
+
+            if res_tramos["es_continua"]:
+                continuidad = "Si"
+            else:
+                continuidad = "No"
+
+            txt.insert("end", " RESUMEN FINAL\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+            txt.insert("end", f" Limite por izquierda: {res_tramos['limite_izquierda']}\n", "resultado")
+            txt.insert("end", f" Limite por derecha: {res_tramos['limite_derecha']}\n", "resultado")
+            txt.insert("end", f" Existe el limite: {existe_limite}\n", "resultado")
+            txt.insert("end", f" Valor de f(a): {valor_en_a}\n", "resultado")
+            txt.insert("end", f" Es continua en x = {res_tramos['a']}: {continuidad}\n", "resultado")
+            txt.insert("end", f" Tipo: {res_tramos['tipo_discontinuidad']}\n", "resultado")
+            txt.insert("end", f" Justificacion: {res_tramos['justificacion']}\n\n", "info")
             
             txt.insert("end", " EVIDENCIA COMPUTACIONAL\n", "titulo")
             txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
