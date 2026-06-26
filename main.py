@@ -164,6 +164,14 @@ class AplicacionCalculo(ctk.CTk):
             txt.insert("end", " Funcion generada:\n", "subtitulo")
             txt.insert("end", f" Punto critico:  x = {res_tramos['a']}\n", "normal")
             txt.insert("end", f" {res_tramos['funcion']}\n\n", "math")
+
+            txt.insert("end", " PROCEDIMIENTO MATEMATICO\n", "titulo")
+            txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
+
+            for paso in res_tramos["procedimiento"]:
+                txt.insert("end", f" {paso}\n", "math")
+
+            txt.insert("end", "\n", "normal")
             
             txt.insert("end", " EVIDENCIA COMPUTACIONAL\n", "titulo")
             txt.insert("end", " " + "\u2500" * 38 + "\n\n", "separador")
