@@ -260,7 +260,7 @@ class creador_ecuacion:
             
             pasos.append(f"Multiplicando por el factor de escala dinámico del RUT ({limpiar_decimales(factor)}):")
             pasos.append(f"  {limpiar_decimales(A)}x² + {limpiar_decimales(B)}y² + ({limpiar_decimales(C)})x + ({limpiar_decimales(D)})y + {limpiar_decimales(E)} = 0")
-            pasos.append(f"Verificación exitosa ✓")
+            pasos.append(f"Verificación exitosa")
 
         elif tipo == "hiperbola":
             h, k = elementos["centro"]

@@ -23,7 +23,8 @@ class DigitoVerificador:
             "resultado_resta": resultado_resta,
             "dv_esperado": dv_esperado
         }
-    
+
+  
     @staticmethod
     def _determinar_dv(resultado_resta: int) -> str:
         if resultado_resta == 11:
@@ -32,6 +33,7 @@ class DigitoVerificador:
             return "K"
         return str(resultado_resta)
     
+
 class AnalizadorRut:
     def __init__(self, rut_completo: str):
         self.rut_completo = rut_completo.strip()

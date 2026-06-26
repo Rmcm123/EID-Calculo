@@ -45,14 +45,40 @@ class AplicacionCalculo(ctk.CTk):
         self.tab_conicas.columnconfigure(1, weight=1)
         self.tab_conicas.rowconfigure(0, weight=1)
         
-        # pasos
-        self.txt_pasos_conicas = ctk.CTkTextbox(self.tab_conicas, wrap="word", font=("Arial", 12))
-        self.txt_pasos_conicas.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        # contenedor izquierdo para boton + textbox
+        self.frame_izq_conicas = ctk.CTkFrame(self.tab_conicas)
+        self.frame_izq_conicas.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_izq_conicas.rowconfigure(1, weight=1)
+        self.frame_izq_conicas.columnconfigure(0, weight=1)
+
+        # boton para mostrar/ocultar procedimientos
+        self.procedimientos_visibles = False
+        self.btn_toggle_procedimientos = ctk.CTkButton(
+            self.frame_izq_conicas,
+            text="Mostrar Procedimientos",
+            command=self._toggle_procedimientos,
+            font=("Arial", 13, "bold"),
+            height=38
+        )
+        # no se muestra hasta que se analice un RUT
+
+        # pasos (oculto por defecto)
+        self.txt_pasos_conicas = ctk.CTkTextbox(self.frame_izq_conicas, wrap="word", font=("Arial", 12))
         self._configurar_estilos(self.txt_pasos_conicas)
 
         # grafica
         self.grafico_conicas = GraficoConicas(self.tab_conicas)
         self.grafico_conicas.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+    def _toggle_procedimientos(self):
+        if self.procedimientos_visibles:
+            self.txt_pasos_conicas.grid_forget()
+            self.btn_toggle_procedimientos.configure(text="Mostrar Procedimientos")
+            self.procedimientos_visibles = False
+        else:
+            self.txt_pasos_conicas.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0, 5))
+            self.btn_toggle_procedimientos.configure(text="Ocultar Procedimientos")
+            self.procedimientos_visibles = True
 
     def _setup_tab_tramos(self):
         self.tab_tramos.columnconfigure(0, weight=1)
@@ -131,6 +157,11 @@ class AplicacionCalculo(ctk.CTk):
         self.txt_pasos_tramos.delete(1.0, "end")
         self.grafico_conicas.limpiar()
         self.grafico_tramos.limpiar()
+        # ocultar boton y procedimientos al limpiar
+        self.btn_toggle_procedimientos.grid_forget()
+        self.txt_pasos_conicas.grid_forget()
+        self.procedimientos_visibles = False
+        self.btn_toggle_procedimientos.configure(text="Mostrar Procedimientos")
 
         campos_respuestas = [
             self.ent_limite_izq,
@@ -159,6 +190,9 @@ class AplicacionCalculo(ctk.CTk):
                 return
             
             self.lbl_estado.configure(text="RUT Válido", text_color="green")
+            
+            # mostrar boton de procedimientos
+            self.btn_toggle_procedimientos.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 5))
             
             # Formatear texto conicas con estilos visuales
             txt = self.txt_pasos_conicas
